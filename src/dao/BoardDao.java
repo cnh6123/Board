@@ -89,4 +89,58 @@ public class BoardDao {
 		}
 		return list;
 	}
+	
+	public void readCount(int num) throws SQLException {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		String sql = "update board set readcount = readcount + 1 where num = ?";
+		try {
+			conn = getConnection();
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, num);
+			pstmt.executeUpdate();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.out.println(e.getMessage());
+		}finally {
+			if (pstmt != null) pstmt.close();
+			if (conn !=null) conn.close();
+		}
+	}
+	
+	public Board select(int num) throws SQLException{
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		Board board = null;
+		String sql = "select * from board where num = ?";
+		try {
+			conn = getConnection();
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, num);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				board = new Board();
+				board.setNum(rs.getInt("num"));
+				board.setWriter(rs.getString("writer"));
+				board.setSubject(rs.getString("subject"));
+				board.setEmail(rs.getString("email"));
+				board.setReadcount(rs.getInt("readcount"));
+				board.setIp(rs.getString("ip"));
+				board.setRef(rs.getInt("ref"));
+			//	board.setRe_level(rs.getInt("re_step"));
+				board.setRe_level(rs.getInt("re_level"));
+				board.setRe_step(rs.getInt("re_step"));
+				board.setReg_date(rs.getDate("reg_date"));
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.out.println(e.getMessage());
+		}finally {
+			if (rs != null) rs.close();
+			if (pstmt != null) pstmt.close();
+			if (conn !=null) conn.close();
+		}
+		return board;
+	}
 }
