@@ -154,7 +154,6 @@ public class BoardDao {
 		int result = 0;
 		Connection conn = null;
 		PreparedStatement pstmt = null;
-		ResultSet rs = null;
 		String sql = "update board set subject = ?, writer = ?, email = ?, passwd = ?, content = ?, ip = ? where num = ?";
 		try {
 			conn = getConnection();
@@ -184,9 +183,20 @@ public class BoardDao {
 		ResultSet rs = null;
 		String sql1 = "select nvl(max(num),0) from board";
 		String sql = "insert into board values(?,?,?,?,?,?,?,?,?,?,?,sysdate)";
+		String sql2 = "update board set re_step = re_step+1 where "
+				+ "ref=? and re_step > ?";
 		int result = 0;
 		try {
 			conn = getConnection();
+			if(num != 0) {
+				pstmt = conn.prepareStatement(sql2);
+				pstmt.setInt(1, board.getRef());
+				pstmt.setInt(2, board.getRe_step());
+				pstmt.executeUpdate();
+				pstmt.close();
+				board.setRe_step(board.getRe_step()+1);
+				board.setRe_level(board.getRe_level()+1);
+			}
 			pstmt = conn.prepareStatement(sql1);
 			rs = pstmt.executeQuery();
 			rs.next();
@@ -216,6 +226,39 @@ public class BoardDao {
 			if(pstmt != null) pstmt.close();
 			if(conn != null) conn.close();
 		}
+		return result;
+	}
+
+	public int delete(int num, String password) throws SQLException{
+		int result = 0;
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = "delete from board where num = ?";
+		String sql2 = "select passwd from board where num = ?";
+		String dbPassword = null;
+		try {
+			conn = getConnection();
+			pstmt = conn.prepareStatement(sql2);
+			pstmt.setInt(1, num);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				dbPassword = rs.getString(1);
+				if(dbPassword.equals(password)) {
+					rs.close(); pstmt.close();
+					pstmt = conn.prepareStatement(sql);
+					pstmt.setInt(1, num);
+					result = pstmt.executeUpdate();
+				}else result = 0;
+			}else result = -1;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}finally {
+			if(rs != null) rs.close();
+			if(pstmt != null) pstmt.close();
+			if(conn != null) conn.close();
+		}
+		
 		return result;
 	}
 }
